@@ -1,0 +1,105 @@
+\documentclass[11pt]{article}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage{amssymb}
+\usepackage{physics}
+
+\usepackage{listings}
+\lstset{frame = tb, language = Python,
+		aboveskip = 3mm, belowskip = 3mm,
+		tabsize = 3, columns = flexible,
+		basicstyle = \small\ttfamily}
+
+\usepackage{graphicx}
+\graphicspath{{c:/Users/Jacob/Documents/Coding_Stuff/LaTeX/Honors_Thesis/Figures/}}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\renewcommand{\sectionmark}[1]{\markboth{#1}{}}
+\fancyhf{}
+\fancyhead[R]{\leftmark}
+\fancyhead[L]{Monte Carlo and Lattice QCD}
+\fancyfoot[C]{\thepage}
+\fancypagestyle{plain}{\fancyhf{}
+	\renewcommand{\headrulewidth}{0pt}}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes.callouts}
+\tikzset
+{
+	line/.style = {black},
+	transition/.style = {dashed, black}
+}
+
+\begin{document}
+\section{Monte Carlo and the Metropolis Algorithm}
+The Monte Carlo method is a broad class of computational algorithms where the use of random sampling yields numerical results. Any problem that has a probabilistic interpretation can be solved with the Monte Carlo method. And, due to the law of large numbers, with a sufficiently large sample size, expectation values (or, analogously, any integral) can be approximated by a simple mean. For example, we can approximate the following integral:
+\begin{align}
+	\int_a^bf(x)\dd{x}=\frac{b-a}{N}\sum_{i=1}^Nf(x_i)
+\end{align}
+for $N$ samples. This integral can be generalized to any finite dimensional integral over some volume $\Omega$ as
+\begin{align}
+	\int_\Omega f(x)\dd{x}=\frac{V(\Omega)}{N}\sum_{i=1}^Nf(x_i)
+	\label{eq:MCIntGen}
+\end{align} where $V(\Omega)$ is the volume of $\Omega$. This is valid for any dimension and has little effect on computational time. In this paper, high dimensional integrals are computed numerically and so this method holds an advantage.
+
+\subsection{Markov Chain}
+A Markov chain is a sequence of states $(x_0,\ x_1,\ldots,\ x_n)$ such that any state $x_{i+1}$ depends only on its immediately proceeding state $x_i$, a property called memorylessness. The probability of the transition from state $x_i$ to state $x_{i+1}$ is the transition amplitude and defining such a function allows for the modeling of a Markov chain. Every model in this paper has the property of memorylessness and can be modeled as a Markov chain.
+
+Moreover, every model can be modeled by Markov chain Monte Carlo methods. The equilibrium of a many-state system can be difficult, if not impossible, to solve. Rather, starting with an initial state $x_0$, the system will fall into equilibrium, or reach the target distribution, at state $x_n$ for some $n$ large enough. The initial state $x_0$ is arbitrary although a guess of the equilibrium distribution is helpful so as to converge quicker. Beforehand, the equilibrium distribution is unknown but it can be approximated by evolving the Markov chain until the resulting distribution satisfies within an error the conditions of the equilibrium state. As stated before, there is a transition amplitude between states $x_i$ and $x_{i+1}$. So, for some change on $x_i$, a decision must be made whether it will change to $x_{i+1}$ or not change. The method used in this paper is called the Metropolis algorithm.
+
+\subsection{Metropolis Algorithm}
+For a Markov chain, there is a probability density $f(x_j|x_i)$ of choosing state $x_j$ as the next candidate in the Markov chain given state $x_i$. The change in $x_j$ from $x_i$ is usually small. This is to allow for a large number of accepted changes but it isn't too small so as to not change the state negligibly. There is also the conditional probability $P(x_j|x_i)$ of changing to state $x_j$ given state $x_i$. If we assume the process is reversible, then it satisfies the condition of detailed balance
+\begin{align}
+	q(x_j|x_i)P(x_i)=q(x_i|x_j)P(x_j)
+\end{align}
+where $P(x)$ is the desired probability distribution and $q(x_j|x_i)$ is the transition amplitude from $x_i$ to $x_j$. Noting that $q(x_j|x_i)=f(x_j|x_i)P(x_j|x_i)$, this can be rewritten as
+\begin{align}
+	\frac{P(x_j|x_i)}{P(x_i|x_j)}=\frac{f(x_i|x_j)q(x_j)}{f(x_j|x_i)q(x_i)}.
+	\label{eq:MetAlRat}
+\end{align}
+We wish to find the probability $P(x_j|x_i)$ that satisfies equation \ref{eq:MetAlRat}. The Metropolis choice is
+\begin{align}
+	P(x_j|x_i)=\min\left(1,\ \frac{f(x_i|x_j)P(x_j)}{f(x_j|x_i)P(x_i)}\right).
+	\label{eq:TransAmp}
+\end{align}
+Thus, the probability of changing from state $x_i$ to state $x_j$ is shown in equation \ref{eq:TransAmp}. The Metropolis steps are as follows:
+\begin{enumerate}
+\item Initialize the system with some initial state $x_0$.
+\item Randomly pick a state $x_j$ with probability given by $f(x_j|x_i)$ where $x_i$ is the current state.
+\item Accept this new state with probability $P(x_j|x_i)$ as given in equation \ref{eq:TransAmp}.
+\item If accepted, change the state from $x_i$ to $x_j$.
+\item Otherwise, keep the state $x_i$.
+\item Repeat steps 2-5.
+\end{enumerate}
+For the models in this paper, a uniform distribution is used for choosing a new state $x_j$, thus $f(x_j|x_i)=f(x_i|x_j)$. Equation \ref{eq:TransAmp} can be rewritten as
+\begin{align}
+	q(x_j|x_i)=\min\left(1,\ \frac{P(x_j)}{P(x_i)}\right).
+\end{align}
+From the above equation, we can see that if the probability of state $x_j$ is equal to or greater than the probability of $x_i$ (i.e. the new state is more likely in the equilibrium distribution than the old state), then the change is automatically accepted. Thus acceptance of a new state occurs with certainty when $P(x_{new})\geq P(x_{old})$. This can once more be rewritten in a piecewise fashion as
+\begin{align}
+P(x_{i+1}|x_i)=\begin{cases}
+\quad\ 1\qquad&\text{if}\ \ \displaystyle{\frac{P(x_{i+1})}{P(x_i)}\geq1}\\
+\displaystyle{\frac{P(x_{i+1})}{P(x_i)}}\qquad&\text{otherwise.}\\
+\end{cases}
+\end{align}
+The functions for $P(x_i)$ will be defined later in the paper for the specific models.
+
+The Metropolis algorithm allows for the evolution of a statistical system without necessarily the knowledge of the desired probability distribution. But Monte Carlo can also be used in the measurement of observables of the system; after all, not much use is gained by modeling a system if no measurements are made on it.
+
+\subsection{Monte Carlo Measurements}
+As shown in equation \ref{eq:MCIntGen}, Monte Carlo has its uses in the numerical integration of multi-dimensional integrals. We will see that the latter two models in this paper are derived from the Feynman path integral which is, essentially, an infinite dimensional path integral which accounts for every possible path from one state to another (since in quantum mechanics, every path will have a nonzero probability due to effects such as tunneling).
+
+When discretized, any integral is approximated by a sum. We will see that for some expectation average $\langle f(x)\rangle$ that is weighted by some probability density function $g(x)$, it can be written as
+\begin{align}
+	\langle f(x)\rangle=\int f(x)g(x)\dd{x}.
+\end{align}
+But if some $x$ has a probability of being chosen proportional to $g(x)$, then the unweighted, simple average
+\begin{align}
+	\langle f(x)\rangle\approx\overline{f(x)}=\frac{1}{N}\sum_{i=1}^Nf(x_i)
+	\label{eq:MCExp}
+\end{align}
+can be used as an approximation. The term $\overline{f(x)}$ is the Monte Carlo estimator for $\langle f(x)\rangle$. Since $N$ is finite, the estimator will never be exact. In the limit, $\overline{f(x)}\to\langle f(x)\rangle$ as $N\to\infty$. This result allows for the approximation of any expectation value where the error is dependent on $N$. 
+
+
+
+\end{document}
