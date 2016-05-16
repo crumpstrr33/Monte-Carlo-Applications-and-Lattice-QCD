@@ -1,5 +1,5 @@
 # Monte Carlo Applications and Lattice QCD
-Contains all of the code used in the thesis along with the .pdf and .tex files and figures used for the thesis.
+Contains all of the code used in the thesis along with the .pdf and .tex files and figures used for the thesis. Below are quick descriptions of the three main sections of the paper. Further explanations for the code can be found in the respective programs and for the topics/physics can be found in the paper (Honors Thesis.pdf) or in one of the individual sections (found in the Honors Thesis folder).
 
 ## Description
 #### Ising Model
