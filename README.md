@@ -2,7 +2,13 @@
 Contains all of the code used in the thesis along with the .pdf and .tex files and figures used for the thesis.
 
 ## Description
-### Gluonic Path Integral
+#### Ising Model
+Calculated the effect of lattice size and temperature on the magnetization and susceptibility of a 2 dimensional Ising model. The .mp4 file is a visual example of the Ising model that has a lattice size of 1000 produced by ising_animation.py.
+
+#### Feynman Path Integral (on the Quantum Harmonic Oscillator)
+After discretizing the Feynman path integral, it was applied to the ground state of the harmonic oscillator. Then it is applied to the correlation of an excited state at different times where the excitation energy can be extracted.
+
+#### Gluonic Path Integral
 Measured three different Wilson loops using a second- and third-order correction Wilson action as described in the paper. The Wilson loops are:
 - AxA
 - Ax2A
