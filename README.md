@@ -2,7 +2,8 @@
 Contains all of the code used in the thesis along with the .pdf and .tex files and figures used for the thesis.
 
 ## Description
-### Gluonic Path Integral: Measured three different Wilson loops using a second- and third-order correction Wilson action as described in the paper. The Wilson loops are:
+### Gluonic Path Integral:
+Measured three different Wilson loops using a second- and third-order correction Wilson action as described in the paper. The Wilson loops are:
 - AxA
 - Ax2A
 - Ax3A
