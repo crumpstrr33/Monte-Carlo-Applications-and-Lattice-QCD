@@ -38,9 +38,9 @@ In a classical system, a path a particle will take in a potential field is deter
 	S[x]=\int_{t_i}^{t_f}\mathcal{L}(\vb{x},\dot{\vb{x}})\dd{t},
 	\label{eq:Action}
 \end{align}
-where $\mathcal{L}(x,\dot{x})$ is the Lagrangian, gives the path of the particle when the action reaches a minimum. So classically, there is a unique path for a particle but quantum mechanically, due to its probabilistic nature, every path is possible and must be accounted for in calculations. With this in mind, how does one find the probability to go from $(x_i,t_i)$ to $(x_f,t_f)$ in some potential field when all paths are possible?
+where $\mathcal{L}(x,\dot{x})$ is the Lagrangian, gives the path of the particle when the action reaches a minimum. Classically, there is a unique path for a particle but quantum mechanically, due to its probabilistic nature, every path is possible and must be accounted for in calculations. With this in mind, how does one find the probability to go from $(x_i,t_i)$ to $(x_f,t_f)$ in some potential field when all paths are possible?
 
-We start with the propagator in wave mechanics given by
+We start with the propagator in wave mechanics given by \cite{QuantumBook}
 
 \begin{align}
 	K(\vb{x}_f,t_f;\vb{x}_i,t_0)=\sum_a\bra{\vb{x}_f}\ket{a}\bra{a}\ket{\vb{x}_i}\exp\left[\frac{-iE_a(t_f-t_0)}{\hbar}\right]
@@ -64,7 +64,7 @@ In both equations \ref{eq:WavFuncProp} and \ref{eq:PropExp} and as hinted by the
 	&=\bra{\vb{x}_f,t_f}\ket{\vb{x_i},t_i}.
 \end{split}
 \end{align}
-The Feynman path integral gives us a way to calculate the propagator. It is as follows:
+The Feynman path integral gives us a way to calculate the propagator. It is as follows from \cite{MainPaper}:
 
 \begin{align}
 	\bra{x_f,t_f}\ket{x,t_i}=\int\mathcal{D}[x(t)]e^{iS[x]/\hbar}
@@ -72,16 +72,16 @@ The Feynman path integral gives us a way to calculate the propagator. It is as f
 \end{align}
 where the position operators have been simplified to one dimension although the generalization for higher dimensions is analogous.
 
-In equation \ref{eq:ContPathInt}, $\mathcal{D}[x(t)]$ represents all paths that the particle can take and is weighted exponentially. One concern is the divergence of the integral; it is an infinite dimensional integral with nonzero contributions from each dimension. But the integral will not diverge. Since for paths far from the classical path, the action will be large yielding a large frequency and thus a large phase shift compared to paths close to it. This will deconstructively interfere with other paths far from the classical path thus contributing little to the integral. Also at the classical $\hbar\to0$ limit, the same behavior will be seen and the only surviving path is the one with a minimized action.
+In equation \ref{eq:ContPathInt}, $\mathcal{D}[x(t)]$ represents all paths that the particle can take and is weighted by the $e^{iS[x]/\hbar}$ term. One concern is the divergence of the integral; it is an infinite dimensional integral with nonzero contributions from each dimension. But the integral will not diverge. Since for paths far from the classical path, the action will be large yielding a large frequency and thus a large phase shift compared to paths close to it. This will deconstructively interfere with other paths far from the classical path thus contributing little to the integral. Also at the classical $\hbar\to0$ limit, the same behavior will be seen and the only surviving path is the one with a minimized action.
 
 It is more convenient to work in Euclidean space so a change of variables $t\to it$ by a Wick rotation allows for simpler calculations for computers but does not effect the physics. Furthermore, using natural units such that $\hbar=c=1$, the above equation is further simplified. This will give
 \begin{align}
 	\bra{x_f,t_f}\ket{x,t_i}=\int\mathcal{D}[x(t)]e^{-S[x]}
 \end{align}	
-where one can see that both paths far from the classical path contribute little and the $\hbar\to0$ limit still holds true.
+where one can see that both paths far from the classical path contribute little and the $\hbar\to0$ limit still holds true due to the exponential dampening.
 
 \subsection{Discretization}
-The above equation is called the propagator which gives us complete information about the system. To solve this path integral numerically, the above equation must be discretized. To do so, we can split the possible paths of the particle into $N-1$ time slices such that for one path, the particle will travel along $(x_1,t_1),\ldots,(x_N,t_N)$. Thus the previously infinite dimensional integral can be approximated as
+The above equation is called the propagator which gives us complete information about the system. To solve this path integral numerically, the propagator must be discretized. To do so, we can split the possible paths of the particle into $N-1$ time slices such that for one path, the particle will travel along $(x_1,t_1),\ldots,(x_N,t_N)$ \cite{QuantumBook}. Thus the previously infinite dimensional integral can be approximated as
 \begin{align} 
 	\int\mathcal{D}[x(t)]=A\underbrace{\int_{-\infty}^{\infty}\ldots\int_{-\infty}^{\infty}}_{N-1\ \text{integrals}}\dd{x_1}\ldots\dd{x_{N-1}}
 \end{align}
@@ -110,15 +110,15 @@ where
 	\label{eq:ActionTot}
 \end{align}
 
-In equation \ref{eq:PathIntNum}, the contribution of paths are exponentially damped so quantum mechanical paths (paths far from the classical path) contribute very little to the path integral because of how low probability they have of ocurring. The path integral has now been discretized in terms of $N-1$ time slices where, for each slice, the action is assumed to be constant. So as $\Delta t\to0$, equation \ref{eq:ContPathInt} is recovered.
+In equation \ref{eq:PathIntNum}, the contribution of paths are exponentially damped so quantum mechanical paths (paths far from the classical path) contribute very little to the path integral because of their low probability. The path integral has now been discretized in terms of $N-1$ time slices where, for each slice, the action is assumed to be constant. So as $\Delta t\to0$, equation \ref{eq:ContPathInt} is recovered.
 
-It is important to note that if $\Delta t$ is large, then the propagator can be rewritten as
+It is important to note that if $\Delta t$ is large and $T=t_f-t_i$, then the propagator can be rewritten as
 \begin{align}
-	\mel{x}{e^{-H(t_f-t_i)}}{x}\approx e^{-E_0(t_f-t_i)}\abs{\bra{x}\ket{E_0}}^2
+	\mel{x}{e^{-HT}}{x}\approx e^{-E_0T}\abs{\bra{x}\ket{E_0}}^2
 \end{align}
-since the ground state dominates due to the exponential. So assuming a large $\Delta t$, the propagator is effectively measured for the ground state wave function. Shown below, $\Delta t$ is taken to be 1/2 and $N=8$, so then $t_f-t_i=4$.
+since the ground state dominates due to the exponential. So assuming a large $\Delta t$, the propagator is effectively measured for the ground state wave function \cite{MainPaper}. Shown below, $\Delta t$ is taken to be 1/2 and $N=8$, so then $T=4$.
 
-\subsection{Example}
+\subsection{Ground State Harmonic Oscillator}
 The integral was computed for a one-dimensional harmonic oscillator with
 \begin{align}
 V(x)=\frac{x^2}{2},\ \ A=\left(\frac{m}{2\pi a}\right)^{N/2}\ \ \text{and}\ \ \Delta t=\frac{1}{2}.
@@ -134,8 +134,7 @@ The integral was computed using Mathematica as shown in figure \ref{fig:QHO}. Th
 \end{figure}
 
 \subsection{Monte Carlo Application}
-\subsubsection{Manipulation for Monte Carlo}
-The above derivation is in regards to the ground state of the system. In systems such as those found in quantum field theory, the ground state is a vacuum and the measurement of observables in excited states is desired. The vacuum expectation value $\expval{x(t_2)x(t_1)}{0}$ can be written as the correlation function
+The above derivation is in regards to the ground state of the system. In systems such as those found in quantum field theory, the ground state is a vacuum and the measurement of observables in excited states is desired. The vacuum expectation value $\expval{x(t_2)x(t_1)}{0}$ can be written as the correlation function \cite{CorrFunctions}
 \begin{align}
 	\langle x(t_1)x(t_2)\rangle=\frac{\int \mathcal{D}[x(t)]x(t_2)x(t_1)e^{-S[x]}}{\int \mathcal{D}[x(t)]e^{-S[x]}}
 	\label{eq:CorFunction}
@@ -145,7 +144,7 @@ where $t_i<t_1<t_2<t_f$. Notice that equation \ref{eq:CorFunction} is written in
 	\langle x(t_1)x(t_2)\rangle&=\frac{\int\dd{x}\mel{0}{e^{-H(t_f-t_2)}}{x}\mel{x}{e^{-H(t_2-t_1)}}{x}\mel{x}{e^{-H(t_1-t_i)}}{0}}{\int\dd{x}\mel{0}{e^{-H(t_f-t_i)}}{0}}.\\
 	\intertext{The numerator can be seen as an interruption on equation \ref{eq:ContPathInt} with the position operator $x$ at $t_1$ and $t_2$. Simplifying, we have}
 	&=\frac{\int\dd{x}\mel{0}{e^{-H(t_f-t_2)}xe^{-H(t_2-t_1)}xe^{-H(t_1-t_i)}}{0}}{\int\dd{x}\mel{0}{e^{-H(t_f-t_i)}}{0}}.\\
-	\intertext{A further simplification can be made by inserting the the complete set of states $\sum_i\ket{E_i}\bra{E_i}=1$ twice for $i=m,n$ next to the vacuum bra and ket. Letting $T=t_f-t_i$ and $t=t_2-t_1$, this ultimately yields}
+	\intertext{A further simplification can be made by inserting the the complete set of states $\sum_i\ket{E_i}\bra{E_i}=1$ twice for $i=m,n$ next to the vacuum bra and ket. Letting $T=t_f-t_i$ and $t=t_2-t_1$, this ultimately yields \cite{MainPaper}}
 	&=\frac{\sum_ne^{-E_nT}\mel{E_n}{xe^{-(H-E_n)t}x}{E_n}}{\sum_ne^{-E_nT}}.
 \end{align}
 Making the assumption that $T$ is large and $T\gg t$, the first term will dominate due to the exponential and we end up with
@@ -163,9 +162,9 @@ where we can now find the difference $E_1-E_0$. There is the unknown transition 
 	E_1-E_0=\frac{1}{a}\log\left[\frac{G(t)}{G(t+a)}\right].
 	\label{eq:ExciteE}
 \end{align}
-The quantity $G(t)$ can be considered as a weighted average from equation \ref{eq:CorFunction} with the weight being the exponential $\exp(-S[x])$. If the probability of the paths being drawn is proportional to this weight and the number of paths is large, then the weighted average can be approximated with an unweighted average. This means that
+The quantity $G(t)$ can be considered as a weighted average from equation \ref{eq:CorFunction} with the weight being the exponential $\exp(-S[x])$. As stated in the first section, if the probability of the paths being drawn is proportional to this weight and the number of paths is large, then the weighted average can be approximated with an unweighted average. This means that
 \begin{align}
-	G(t)=\langle x(t_1)x(t_2)\rangle\approx\frac{1}{N}\sum_{n=1}^Nx_n(t_1)x_n(t_2)
+	G(t)=\langle x(t_1)x(t_2)\rangle\approx\frac{1}{N}\sum_{n=1}^Nx_n(t_1)x_n(t_2).
 	\label{eq:GApprox}
 \end{align}
 
@@ -182,7 +181,7 @@ The change in action can be written as
 \begin{align}
 	\Delta S= \frac{\alpha}{a}\left[(a^2+2)x_j+\left(\frac{\alpha^2}{2}+1\right)\alpha-x_{j+1}-x_{j-1}\right]
 \end{align}
-and, as with the Ising model, periodic boundary conditions are used, so the modulus operator is used for $x_{j+1}$ and $x_{j-1}$. Figure \ref{fig:PathCode} shows the code that applies the steps above.
+and, as with the Ising model, periodic boundary conditions are used, so the modulus operator is implied for $x_{j+1}$ and $x_{j-1}$. Figure \ref{fig:PathCode} shows the code that applies the steps above.
 \begin{figure}[h]
 \begin{lstlisting}
 def dS(j, alpha):
@@ -201,12 +200,11 @@ def update(x):
 \label{fig:PathCode}
 \end{figure}
 
-A few details must be discussed before making measurements. Firstly, is the starting configuration. An initial configuration should be used that is close to the equilibrium. This allows the program to reach equilibrium quicker. A initial configuration of $x_j=0$ for all $j$ is used in this program. One detail is the value of $\epsilon$. This number determines the maximum at which a site can change and there are pros and cons to having both a large or small $\epsilon$. If $\epsilon$ is small, many changes will be accepted but each successive path will be highly correlated. On the other extreme, successive paths will not be very correlated but changes will rarely be accepted. Therefore an $\epsilon$ is chosen by trial and error and $\epsilon=1.4$ is used in this code. Correlated paths are not desirable because the evolution of the path should be independent of previous values of the path. Therefore, not every path created is kept; for this model, every $N_{cor}$th path is recorded where $N_{\text{cor}}=20$. This number is inversely proportional to the lattice spacing $a$ and goes roughly as $N_{\text{cor}}\propto 1/a^2$. In this model, $a$ is large ($a=1/2$), so the choice of $N_{\text{cor}}$ is appropriate. Lastly, the paths must be thermalized before measurements are taken. In other words, the system must reach an equilibrium before paths are recorded and correlation functions measured. The appropriate number for this can also be measured by trial error. Here, $5N_{\text{cor}}$ paths are thrown away before measurements are taken.
+A few details must be brought up before making measurements as discussed in \cite{MainPaper}. The first is the starting configuration. An initial configuration should be used that is close to the equilibrium. This allows the program to reach equilibrium quicker. A initial configuration of $x_j=0$ for all $j$ is used in this program. One detail is the value of $\epsilon$. This number determines the maximum at which a site can change and there are pros and cons to having both a large or small $\epsilon$. If $\epsilon$ is small, many changes will be accepted but each successive path will be highly correlated. On the other extreme, successive paths will not be very correlated but changes will rarely be accepted. Therefore an $\epsilon$ is chosen by trial and error and $\epsilon=1.4$ is used in this code. Correlated paths are not desirable because the evolution of the path should be independent of previous values of the path. Therefore, not every path created is kept; for this model, every $N_{cor}$th path is recorded where $N_{\text{cor}}=20$. This number is inversely proportional to the lattice spacing $a$ and goes roughly as $N_{\text{cor}}\propto 1/a^2$. In this model, $a$ is large ($a=1/2$), so the choice of $N_{\text{cor}}$ is appropriate. Lastly, the paths must be thermalized before measurements are taken. In other words, the system must reach an equilibrium before paths are recorded and correlation functions measured. The appropriate number for this can also be measured by trial error. Here, $5N_{\text{cor}}$ paths are thrown away before measurements are taken.
 
-\subsubsection{Measurements}
+\subsection{Measurements}
 The quantity $G(t)$ can be measured numerically by using equation \ref{eq:GApprox} since the measurement is a simple product but other correlation functions could be calculated  and used by changing that which is used in the function \texttt{computeG} in figure \ref{fig:ComputeG}. The potential (in this case, that of the harmonic oscillator) can also be changed in the function \texttt{dS} in figure \ref{fig:PathCode}.
 
-The correlation function requires the correlation between each pair of sites on the path to be measured for each path. This is shown in figure \ref{fig:ComputeG}. For this code, 10000 paths are created and, to save computing time, binned into 100 different bins. Binning the paths does not change the statistics of the system, but makes calculations much quicker. Since $G(t)$ measures the correlation of two sites on the path and is the sum of a decreasing and an increasing exponential, we expect to see a curve similar to a hyperbolic cosine due to the periodic boundary conditions. This is seen in figure \ref{fig:CorrFunc}; path sites with a further distance between them are less correlated.
 \begin{figure}
 \begin{lstlisting}
 def computeG(x, n):
@@ -227,21 +225,26 @@ def MCPaths(G):
 \label{fig:ComputeG}
 \end{figure}
 
-\begin{figure}[h]
+
+\subsubsection{Correlation Function}
+The correlation function requires the correlation between each pair of sites on the path to be measured for each path. This is shown in figure \ref{fig:ComputeG}. For this code, 10000 paths are created and, to save computing time, binned into 100 different bins. Binning the paths does not change the statistics of the system, but makes calculations much quicker. Since $G(t)$ measures the correlation of two sites on the path and is the sum of a decreasing and an increasing exponential, we expect to see a curve similar to a hyperbolic cosine due to the periodic boundary conditions. This is seen in figure \ref{fig:CorrFunc}; path sites with a further distance between them are less correlated.
+
+\begin{figure}[h!]
 	\centering
-	\includegraphics[scale=0.60]{Correlation_Function.png}
-	\caption{Measurement of the correlation function for $N=20$ number of sites. The minimum for $G(t)$ is at the maximum distance (or maximum $t$) with periodic boundary conditions (therefore it is found at $N/2$).}
+	\includegraphics[scale=0.55]{Correlation_Function.png}
+	\caption{Measurement of the correlation function for $N=20$ number of sites. The minimum for $G(t)$ is at the maximum distance (or maximum $t$) with periodic boundary conditions.}
 	\label{fig:CorrFunc}
 \end{figure}
 
-Using this data, the excitation energy from the ground state can be found by using equation \ref{eq:ExciteE}. This can be rewritten as
+\subsubsection{Excitation Energy}
+Using this data, the excitation energy from the ground state can be found by using equation \ref{eq:ExciteE}. This can be rewritten as \cite{MainPaper}
 \begin{align}
 	E_1-E_0=\frac{1}{a}\log\left[\frac{G_n}{G_{n+1}}\right]
 	\label{eq:CompExciteE}
 	\intertext{where}
-	G_n=\frac{1}{N}\sum_{j=1}^Nx_{(j+n)\%N}x_j
+	G_n=\frac{1}{N}\sum_{j=1}^Nx_{(j+n)\%N}x_j.
 \end{align}
-and the $\%$ is the modulo operator to take into account the periodic boundary condition. Using equation \ref{eq:CompExciteE}, $N=20$ data points are averaged over 10000 paths. The result is shown in figure \ref{fig:ExciteE}.
+Using equation \ref{eq:CompExciteE}, $N=20$ data points are averaged over 10000 paths. The result is shown in figure \ref{fig:ExciteE}.
 
 The error bars are calculated using the bootstrap method. An ensemble of $N_{cf}$ paths are generated and binned into 100 bins which create 100 new paths that contain the same distribution as the original $N_{cf}$ paths. From the new paths, 100 random paths are selected with replacement which we call the bootstrap paths. The result can contain the same path multiple times as a result. Measurements of $G_n$ and $E_1-E_0$ are completed for the bootstrap paths. The bootstrap method can be calculated many times and distribution of these bootstrap measurements are used to estimate the statistical error of the Monte Carlo measurement of $G_n$ and $E_1-E_0$.
 
@@ -249,11 +252,10 @@ Note that the energy of the quantum harmonic oscillator is $E_n=(n+1/2)\hbar\ome
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[scale=0.60]{Excitation_Energy.png}
+	\includegraphics[scale=0.55]{Excitation_Energy.png}
 	\caption{Excitation energy of the quantum harmonic oscillator from the ground state. The expected value $E_1-E_0=1$ is represented by the line.}
 	\label{fig:ExciteE}
 \end{figure}
 
-The harmonic oscillator was used here because of its relatively simple potential $V(x)=x^2/2$ but any potential could be easily applied by using equation \ref{eq:ActionTot} and summing just the $(j-1)$th, $j$th and $(j+1)$th term to calculate the action. Then $\Delta S$ is the difference in action if the $j$th term has some small $\alpha$ added to it. The equation in figure \ref{fig:PathCode} is the simplified equation of $\Delta S$ for the harmonic oscillator. As will be seen in the next section, different measurements can be made relatively easily once the system has been modeled correctly. Here, it was the path integral on a one-dimensional quantum mechanical system. In the next section, it will be the path integral in spacetime for gluons.
-
+The harmonic oscillator was used here because of its relatively simple potential $V(x)=x^2/2$ but any potential could be easily applied by using equation \ref{eq:ActionTot} and summing the terms of the sum that include the $j$th term. Then $\Delta S$ is the difference in action if the $j$th term has some small $\alpha$ added to it. The equation in figure \ref{fig:PathCode} is the simplified equation of $\Delta S$ for the harmonic oscillator. As will be seen in the next section, different measurements can be made relatively easily once the system has been modeled correctly. Here, it was the path integral on a one-dimensional quantum mechanical system. In the next section, it will be the path integral in spacetime for gluons.
 \end{document}

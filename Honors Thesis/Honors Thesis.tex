@@ -349,7 +349,7 @@ It is important to note that if $\Delta t$ is large and $T=t_f-t_i$, then the pr
 \end{align}
 since the ground state dominates due to the exponential. So assuming a large $\Delta t$, the propagator is effectively measured for the ground state wave function \cite{MainPaper}. Shown below, $\Delta t$ is taken to be 1/2 and $N=8$, so then $T=4$.
 
-\subsection{Example}
+\subsection{Ground State Harmonic Oscillator}
 The integral was computed for a one-dimensional harmonic oscillator with
 \begin{align}
 V(x)=\frac{x^2}{2},\ \ A=\left(\frac{m}{2\pi a}\right)^{N/2}\ \ \text{and}\ \ \Delta t=\frac{1}{2}.
@@ -365,7 +365,6 @@ The integral was computed using Mathematica as shown in figure \ref{fig:QHO}. Th
 \end{figure}
 
 \subsection{Monte Carlo Application}
-\subsubsection{Manipulation for Monte Carlo}
 The above derivation is in regards to the ground state of the system. In systems such as those found in quantum field theory, the ground state is a vacuum and the measurement of observables in excited states is desired. The vacuum expectation value $\expval{x(t_2)x(t_1)}{0}$ can be written as the correlation function \cite{CorrFunctions}
 \begin{align}
 	\langle x(t_1)x(t_2)\rangle=\frac{\int \mathcal{D}[x(t)]x(t_2)x(t_1)e^{-S[x]}}{\int \mathcal{D}[x(t)]e^{-S[x]}}
@@ -434,10 +433,9 @@ def update(x):
 
 A few details must be brought up before making measurements as discussed in \cite{MainPaper}. The first is the starting configuration. An initial configuration should be used that is close to the equilibrium. This allows the program to reach equilibrium quicker. A initial configuration of $x_j=0$ for all $j$ is used in this program. One detail is the value of $\epsilon$. This number determines the maximum at which a site can change and there are pros and cons to having both a large or small $\epsilon$. If $\epsilon$ is small, many changes will be accepted but each successive path will be highly correlated. On the other extreme, successive paths will not be very correlated but changes will rarely be accepted. Therefore an $\epsilon$ is chosen by trial and error and $\epsilon=1.4$ is used in this code. Correlated paths are not desirable because the evolution of the path should be independent of previous values of the path. Therefore, not every path created is kept; for this model, every $N_{cor}$th path is recorded where $N_{\text{cor}}=20$. This number is inversely proportional to the lattice spacing $a$ and goes roughly as $N_{\text{cor}}\propto 1/a^2$. In this model, $a$ is large ($a=1/2$), so the choice of $N_{\text{cor}}$ is appropriate. Lastly, the paths must be thermalized before measurements are taken. In other words, the system must reach an equilibrium before paths are recorded and correlation functions measured. The appropriate number for this can also be measured by trial error. Here, $5N_{\text{cor}}$ paths are thrown away before measurements are taken.
 
-\subsubsection{Measurements}
+\subsection{Measurements}
 The quantity $G(t)$ can be measured numerically by using equation \ref{eq:GApprox} since the measurement is a simple product but other correlation functions could be calculated  and used by changing that which is used in the function \texttt{computeG} in figure \ref{fig:ComputeG}. The potential (in this case, that of the harmonic oscillator) can also be changed in the function \texttt{dS} in figure \ref{fig:PathCode}.
 
-The correlation function requires the correlation between each pair of sites on the path to be measured for each path. This is shown in figure \ref{fig:ComputeG}. For this code, 10000 paths are created and, to save computing time, binned into 100 different bins. Binning the paths does not change the statistics of the system, but makes calculations much quicker. Since $G(t)$ measures the correlation of two sites on the path and is the sum of a decreasing and an increasing exponential, we expect to see a curve similar to a hyperbolic cosine due to the periodic boundary conditions. This is seen in figure \ref{fig:CorrFunc}; path sites with a further distance between them are less correlated.
 \begin{figure}
 \begin{lstlisting}
 def computeG(x, n):
@@ -458,13 +456,17 @@ def MCPaths(G):
 \label{fig:ComputeG}
 \end{figure}
 
-\begin{figure}[h]
+\subsubsection{Correlation Function}
+The correlation function requires the correlation between each pair of sites on the path to be measured for each path. This is shown in figure \ref{fig:ComputeG}. For this code, 10000 paths are created and, to save computing time, binned into 100 different bins. Binning the paths does not change the statistics of the system, but makes calculations much quicker. Since $G(t)$ measures the correlation of two sites on the path and is the sum of a decreasing and an increasing exponential, we expect to see a curve similar to a hyperbolic cosine due to the periodic boundary conditions. This is seen in figure \ref{fig:CorrFunc}; path sites with a further distance between them are less correlated.
+
+\begin{figure}[h!]
 	\centering
 	\includegraphics[scale=0.55]{Correlation_Function.png}
-	\caption{Measurement of the correlation function for $N=20$ number of sites. The minimum for $G(t)$ is at the maximum distance (or maximum $t$) with periodic boundary conditions (therefore it is found at $N/2$).}
+	\caption{Measurement of the correlation function for $N=20$ number of sites. The minimum for $G(t)$ is at the maximum distance (or maximum $t$) with periodic boundary conditions.}
 	\label{fig:CorrFunc}
 \end{figure}
 
+\subsubsection{Excitation Energy}
 Using this data, the excitation energy from the ground state can be found by using equation \ref{eq:ExciteE}. This can be rewritten as \cite{MainPaper}
 \begin{align}
 	E_1-E_0=\frac{1}{a}\log\left[\frac{G_n}{G_{n+1}}\right]
@@ -912,7 +914,7 @@ def measure(loopLength):
 \begin{figure}[h!]
 	\centering
 	\includegraphics[scale=0.60]{LQCD_MC_Measurements.png}
-	\caption{Monte Carlo measurements for $a\cross a$, $a\cross2a$ and $a\cross3a$ Wilson loops. The triangles represent the improved action from equation \ref{eq:ImpActTPI} while the squares represent the unimproved action from equation \ref{eq:WilsonAction}. Between each measurement, $N_{cor}=50$ sweeps were omitted along with 100 sweeps after the lattice was initialized for it to reach equilibrium.}
+	\caption{Monte Carlo measurements for $a\cross a$, $a\cross2a$ and $a\cross3a$ Wilson loops. The triangles represent the improved action from equation \ref{eq:ImpActTPI} while the squares represent the unimproved action from equation \ref{eq:WilsonAction}. Between each measurement, $N_{cor}=50$ sweeps were omitted.}
 	\label{fig:LQCDPlot}
 \end{figure}
 
