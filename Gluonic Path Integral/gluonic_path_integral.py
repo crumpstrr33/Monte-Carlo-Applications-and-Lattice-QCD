@@ -1,59 +1,80 @@
+'''
+Three different sized Wilson loops (AxA, Ax2A and Ax3A) are calculated on a 
+spacetime lattice using an improved lattice involving rectangle operators
+for a second-order correction. The program can also be run for the unimproved 
+action with the boolean IMP_ACT.
+'''
 import numpy as np
 import cmath
 import datetime as dt
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 from itertools import product
-import Matrix3x3Stuff
+import matrix_functions
 
-N = 8
-N_cor = 1
-N_cf = 100
-N_ma = 10
-eps = 0.24
-beta = 1.719
-#beta = 5.5
-mu0 = 0.797
-c1 = 5 / (3 * mu0**4)
-c2 = 1 / (12 * mu0**6)
-numMatrices = 100
+IMP_ACT = False
+N = 4 ## Lattice size
+N_COR = 1 ## Number of sweeps before measurement
+N_CF = 25 ## Number of measurements
+N_MA = 10 ## Metropolis steps per link
+EPS = 0.24
+NUM_MAT = 100 ## Number of SU3 matrices and their inverses used
+if IMP_ACT: ## Extra constants for the improved action
+    BETA = 1.719
+    MU0 = 0.797
+    C1 = 5 / (3 * MU0**4)
+    C2 = 1 / (12 * MU0**6)
+else:
+    BETA = 5.5
+
+mat3 = matrix_functions.Matrix_NxN(3, EPS)
+
+j = cmath.sqrt(-1) ## Imaginary unit
+I = mat3.I() ## Identity matrix 
+SU3_LIST = []
+for i in range(NUM_MAT): ## Generate SU3 matrices and their inverses
+    SU3_LIST.append(mat3.SUn())
+    SU3_LIST.append(np.linalg.inv(SU3_LIST[2 * i]))
 
 
-j = cmath.sqrt(-1)
-Mat3 = Matrix3x3Stuff.Matrix_nxn(3, eps)
-I = Mat3.I()
+'''
+Returns modulus of x of n (used for periodic boundary conditions)
+'''
+def m(x, n=N):
+    return x % n
 
-latTots0 = []
-latTots1 = []
-latTots2 =[]
-SU3list = []
-for i in range(numMatrices):
-    SU3list.append(Mat3.SUn())
-    SU3list.append(np.linalg.inv(SU3list[2 * i]))
-L = np.array([I] * N**4 * 4).reshape((N,N,N,N,4,3,3))
 
+'''
+Returns a matrix's conjugate transpose (i.e. inverse of an SU3 matrix).
+'''
 def ct(matrix):
     return matrix.conj().T
-    
-def m(x, n = N):
-    return x % n
-    
+
+
+'''
+Returns the matrix product of mats.
+'''
 def mm(*mats):
     product = I
     for i in mats:
         product = np.dot(product, i)
+
     return product
 
-def nRect(x, y, z, t, n):
+
+'''
+Calculates the staples for the rectangle operators R_mn and R_nm for the link at
+(x, y, z, t, n). This returns the matrix total for the link and the conjugate
+of the link.
+'''
+def n_rect(L, x, y, z, t, n):
     a = [0] * 10
     a[n] = 1
-    Rmns = 0
-    RmnC = 0
-    Rnms = 0
-    RnmC = 0
+    r_mn = 0
+    rdmn = 0
+    r_nm = 0
+    rdnm = 0
 
     for i in range(3 - n):
-        Rmns += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][n],                                       \
+        r_mn += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][n],                                       \
                    ct(L[m(x+2*a[0])][m(y+2*a[1]-a[-i])][m(z+2*a[2]-a[1-i])][m(t-a[2-i])][i+n+1]),  \
                    ct(L[m(x+a[0])][m(y+a[1]-a[-i])][m(z+a[2]-a[1-i])][m(t-a[2-i])][n]),            \
                    ct(L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][n]),                              \
@@ -63,7 +84,7 @@ def nRect(x, y, z, t, n):
                    ct(L[m(x-a[0])][m(y-a[1]-a[-i])][m(z-a[2]-a[1-i])][m(t-a[2-i])][n]),            \
                    L[m(x-a[0])][m(y-a[1]-a[-i])][m(z-a[2]-a[1-i])][m(t-a[2-i])][i+n+1],            \
                    L[m(x-a[0])][m(y-a[1])][m(z-a[2])][t][n])
-        RmnC += mm(L[x][y][z][t][i+n+1],                                                           \
+        rdmn += mm(L[x][y][z][t][i+n+1],                                                           \
                    L[x][m(y+a[-i])][m(z+a[1-i])][m(t+a[2-i])][n],                                  \
                    L[m(x+a[0])][m(y+a[1]+a[-i])][m(z+a[2]+a[1-i])][m(t+a[2-i])][n],                \
                    ct(L[m(x+2*a[0])][m(y+2*a[1])][m(z+2*a[2])][t][i+n+1]),                         \
@@ -73,28 +94,28 @@ def nRect(x, y, z, t, n):
                    L[m(x-a[0])][m(y-a[1]+a[-i])][m(z-a[2]+a[1-i])][m(t+a[2-i])][n],                \
                    L[x][m(y+a[-i])][m(z+a[1-i])][m(t+a[2-i])][n],                                  \
                    ct(L[m(x+a[0])][m(y+-a[1])][m(z+a[2])][t][i+n+1]))
-        Rnms += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][i+n+1],                                   \
+        r_nm += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][i+n+1],                                   \
                    L[m(x+a[0])][m(y+a[1]+a[-i])][m(z+a[2]+a[1-i])][m(t+a[2-i])][i+n+1],            \
                    ct(L[x][m(y+2*a[-i])][m(z+2*a[1-i])][m(t+2*a[2-i])][n]),                        \
                    ct(L[x][m(y+a[-i])][m(z+a[1-i])][m(t+a[2-i])][i+n+1]),                          \
                    ct(L[x][y][z][t][i+n+1]))
-        RnmC += mm(ct(L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][i+n+1]),                          \
+        rdnm += mm(ct(L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][i+n+1]),                          \
                    ct(L[x][m(y-2*a[-i])][m(z-2*a[1-i])][m(t-2*a[2-i])][i+n+1]),                    \
                    L[x][m(y-2*a[-i])][m(z-2*a[1-i])][m(t-2*a[2-i])][n],                            \
                    L[m(x+a[0])][m(y+a[1]-2*a[-i])][m(z+a[2]-2*a[1-i])][m(t-2*a[2-i])][i+n+1],      \
                    L[m(x+a[0])][m(y+a[1]-a[-i])][m(z+a[2]-a[1-i])][m(t-a[2-i])][i+n+1])
     for i in range(n):
-        Rmns += mm(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][i],                                       \
+        r_mn += mm(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][i],                                       \
                    L[m(x+a[i+n])][m(y+a[i+n-1]+a[1])][m(z+a[i+n-2]+a[2])][m(t+a[3])][i],           \
                    ct(L[m(x+2*a[i+n])][m(y+2*a[i+n-1])][m(z+2*a[i+n-2])][t][n]),                   \
                    ct(L[m(x+a[i+n])][m(y+a[i+n-1])][m(z+a[i+n-2])][t][i]),                         \
                    ct(L[x][y][z][t][i]))
-        RmnC += mm(ct(L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][i]),                         \
+        rdmn += mm(ct(L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][i]),                         \
                    ct(L[m(x-2*a[i+n])][m(y-2*a[i+n-1])][m(z-2*a[i+n-2])][t][i]),                   \
                    L[m(x-2*a[i+n])][m(y-2*a[i+n-1])][m(z-2*a[i+n-2])][t][n],                       \
                    L[m(x-2*a[i+n])][m(y-2*a[i+n-1]+a[1])][m(z-2*a[i+n-2]+a[2])][m(t+a[3])][i],     \
                    L[m(x-a[i+n])][m(y-a[i+n-1]+a[1])][m(z-a[i+n-2]+a[2])][m(t+a[3])][i])
-        Rnms += mm(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][n],                                       \
+        r_nm += mm(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][n],                                       \
                    ct(L[m(x-a[i+n])][m(y-a[i+n-1]+2*a[1])][m(z-a[i+n-2]+2*a[2])][m(t+2*a[3])][i]), \
                    ct(L[m(x-a[i+n])][m(y-a[i+n-1]+a[1])][m(z-a[i+n-2]+a[2])][m(t+a[3])][n]),       \
                    ct(L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][n]),                         \
@@ -104,7 +125,7 @@ def nRect(x, y, z, t, n):
                    ct(L[m(x-a[i+n])][m(y-a[i+n-1]-a[1])][m(z-a[i+n-2]-a[2])][m(t-a[3])][n]),       \
                    L[m(x-a[i+n])][m(y-a[i+n-1]-a[1])][m(z-a[i+n-2]-a[2])][m(t-a[3])][i],           \
                    L[x][m(y-a[1])][m(z-a[2])][m(t-a[3])][n])
-        RnmC += mm(L[x][y][z][t][i],                                                               \
+        rdnm += mm(L[x][y][z][t][i],                                                               \
                    L[m(x+a[i+n])][m(y+a[i+n-1])][m(z+a[i+n-2])][t][n],                             \
                    L[m(x+a[i+n])][m(y+a[i+n-1]+a[1])][m(z+a[i+n-2]+a[2])][m(t+a[3])][n],           \
                    ct(L[x][m(y+2*a[1])][m(z+2*a[2])][m(t+2*a[3])][i]),                             \
@@ -114,58 +135,95 @@ def nRect(x, y, z, t, n):
                    L[m(x+a[i+n])][m(y+a[i+n-1]-a[1])][m(z+a[i+n-2]-a[2])][m(t-a[3])][n],           \
                    L[m(x+a[i+n])][m(y+a[i+n-1])][m(z+a[i+n-2])][t][n],                             \
                    ct(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][i]))    
-    return Rmns + Rnms, RmnC + RnmC
 
-def nPlaq(x, y, z, t, n):
+    return r_mn + r_nm, rdmn + rdnm
+
+
+'''
+Calculates the staples for the plaquette for the link at
+(x, y, z, t, n). This returns the matrix total for the link and the conjugate
+of the link.
+'''
+def n_plaq(L, x, y, z, t, n):
     a = [0] * 10
     a[n] = 1
-    staples = 0
-    stapleC = 0
+    staple = 0
+    staple_conj = 0
 
     for i in range(3 - n):
-        staples += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][n+i+1],                             \
-                      ct(L[x][m(y+a[-i])][m(z+a[1-i])][m(t+a[2-i])][n]),                        \
-                      ct(L[x][y][z][t][n+i+1]))
-        stapleC += mm(ct(L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][n+i+1]),                    \
-                      L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][n],                            \
-                      L[m(x+a[0])][m(y+a[1]-a[-i])][m(z+a[2]-a[1-i])][t-a[2-i]][n+i+1])
+        staple += mm(L[m(x+a[0])][m(y+a[1])][m(z+a[2])][t][n+i+1],                             \
+                  ct(L[x][m(y+a[-i])][m(z+a[1-i])][m(t+a[2-i])][n]),                           \
+                  ct(L[x][y][z][t][n+i+1]))
+        staple_conj += mm(ct(L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][n+i+1]),               \
+                       L[x][m(y-a[-i])][m(z-a[1-i])][m(t-a[2-i])][n],                          \
+                       L[m(x+a[0])][m(y+a[1]-a[-i])][m(z+a[2]-a[1-i])][t-a[2-i]][n+i+1])
     for i in range(n):
-        staples += mm(ct(L[m(x-a[i+n])][m(y-a[i+n-1]+a[1])][m(z-a[i+n-2]+a[2])][m(t+a[3])][i]), \
-                      ct(L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][n]),                   \
-                      L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][i])
-        stapleC += mm(L[x][y][z][t][i],                                                         \
-                      L[m(x+a[i+n])][m(y+a[i+n-1])][m(z+a[i+n-2])][t][n],                       \
-                      ct(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][i]))
-    return staples, stapleC
+        staple += mm(ct(L[m(x-a[i+n])][m(y-a[i+n-1]+a[1])][m(z-a[i+n-2]+a[2])][m(t+a[3])][i]), \
+                     ct(L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][n]),                   \
+                     L[m(x-a[i+n])][m(y-a[i+n-1])][m(z-a[i+n-2])][t][i])
+        staple_conj += mm(L[x][y][z][t][i],                                                    \
+                       L[m(x+a[i+n])][m(y+a[i+n-1])][m(z+a[i+n-2])][t][n],                     \
+                       ct(L[x][m(y+a[1])][m(z+a[2])][m(t+a[3])][i]))
 
-def dS(staples, stapleC, rects, rectC, x, y, z, t, n):
-    M = SU3list[np.random.randint(0, 2 * numMatrices)]
+    return staple, staple_conj
+
+
+'''
+Calculates the change in the action for the link at (x, y, z, t, n). If 
+IMP_ACT = True, then the improved action is calcualted, otherwise the 
+unimproved action is calculated. The change in action and the random SU3 matrix
+used is returned.
+'''
+def dS(L, staples, stapleC, rects, rectC, x, y, z, t, n):
+    M = SU3_LIST[np.random.randint(0, 2 * NUM_MAT)]
     U = L[x][y][z][t][n]
-    deltaS = (beta / 3) * np.real(np.trace(np.dot(U - mm(M, U), c1 * staples - c2 * rects) + \
-                                            np.dot(ct(U) - ct(mm(M, U)), c1 * stapleC - c2 * rectC)))
-    #deltaS = (beta / 3) * np.real(np.trace(mm(U - mm(M, U), staples) + \
-    #                                       mm(ct(U) - ct(mm(M, U)), stapleC)))                
-    return deltaS, M
 
-def sweep():
+    ## Calculates change in the action based on which action is used
+    if IMP_ACT:
+        delta_S = (BETA / 3) * np.real(np.trace(np.dot(U - mm(M, U), C1 * staples - C2 * rects) + \
+                                            np.dot(ct(U) - ct(mm(M, U)), C1 * stapleC - C2 * rectC)))
+    else:
+        delta_S = (BETA / 3) * np.real(np.trace(mm(U - mm(M, U), staples) + \
+                                               mm(ct(U) - ct(mm(M, U)), stapleC)))
+
+    return delta_S, M
+
+
+'''
+Completes one sweep of the lattice. The function n_rect is run only if the
+improved action is being used, otherwise the variables rect and rect_conj
+are set to 0.
+'''
+def sweep(L):
     for p in product(range(N), range(N), range(N), range(N), range(4)):
         x, y, z, t, n = p
-        staples, stapleC = nPlaq(x, y, z, t, n)
-        rects, rectC = nRect(x,y,z,t,n)
-        for _ in range(N_ma):
-            deltaS, M = dS(staples, stapleC, rects, rectC, x, y, z, t, n)
-            if deltaS < 0 or np.random.random() < np.exp(-deltaS):
+        rect = 0
+        rect_conj = 0
+
+        ## Calculates the respective staples
+        staple, staple_conj = n_plaq(L, x, y, z, t, n)
+        if IMP_ACT:
+            rect, rect_conj = n_rect(L, x, y, z, t, n)
+
+        for _ in range(N_MA):
+            delta_S, M = dS(L, staple, staple_conj, rect, rect_conj, x, y, z, t, n)
+            if delta_S < 0 or np.random.random() < np.exp(-delta_S):
                 L[x][y][z][t][n] = np.dot(M, L[x][y][z][t][n])
 
-def measureLink(x, y, z, t, loopLength):
-    if loopLength == 3:
+
+'''
+Function that the function measure uses since the Wilson loops is longer for 
+Ax2A and Ax3A loops. It returns the extra part of the loop.
+'''
+def measureLink(L, x, y, z, t, loop_length):
+    if loop_length == 3:
         link = [mm(L[m(x+1)][m(y+1)][z][t][1], L[m(x+1)][m(y+2)][z][t][1], ct(L[x][m(y+3)][z][t][0]), ct(L[x][m(y+2)][z][t][1]), ct(L[x][m(y+1)][z][t][1])), \
                 mm(L[m(x+1)][y][m(z+1)][t][2], L[m(x+1)][y][m(z+2)][t][2], ct(L[x][y][m(z+3)][t][0]), ct(L[x][y][m(z+2)][t][2]), ct(L[x][y][m(z+1)][t][2])), \
                 mm(L[m(x+1)][y][z][m(t+1)][3], L[m(x+1)][y][z][m(t+2)][3], ct(L[x][y][z][m(t+3)][0]), ct(L[x][y][z][m(t+2)][3]), ct(L[x][y][z][m(t+1)][3])), \
                 mm(L[x][m(y+1)][m(z+1)][t][2], L[x][m(y+1)][m(z+2)][t][2], ct(L[x][y][m(z+3)][t][1]), ct(L[x][y][m(z+2)][t][2]), ct(L[x][y][m(z+1)][t][2])), \
                 mm(L[x][m(y+1)][z][m(t+1)][3], L[x][m(y+1)][z][m(t+2)][3], ct(L[x][y][z][m(t+3)][1]), ct(L[x][y][z][m(t+2)][3]), ct(L[x][y][z][m(t+1)][3])), \
                 mm(L[x][y][m(z+1)][m(t+1)][3], L[x][y][m(z+1)][m(t+2)][3], ct(L[x][y][z][m(t+3)][2]), ct(L[x][y][z][m(t+2)][3]), ct(L[x][y][z][m(t+1)][3]))]   
-    elif loopLength == 2:
+    elif loop_length == 2:
         link = [mm(L[m(x+1)][m(y+1)][z][t][1], ct(L[x][m(y+2)][z][t][0]), ct(L[x][m(y+1)][z][t][1])), \
                 mm(L[m(x+1)][y][m(z+1)][t][2], ct(L[x][y][m(z+2)][t][0]), ct(L[x][y][m(z+1)][t][2])), \
                 mm(L[m(x+1)][y][z][m(t+1)][3], ct(L[x][y][z][m(t+2)][0]), ct(L[x][y][z][m(t+1)][3])), \
@@ -175,13 +233,19 @@ def measureLink(x, y, z, t, loopLength):
     else:
         link = [ct(L[x][m(y+1)][z][t][0]), ct(L[x][y][m(z+1)][t][0]), ct(L[x][y][z][m(t+1)][0]), \
                 ct(L[x][y][m(z+1)][t][1]), ct(L[x][y][z][m(t+1)][1]), ct(L[x][y][z][m(t+1)][2])]
+
     return link
 
-def measure(loopLength):
+
+'''
+Measures Wilson loops and normalizes and averages them over the lattice.
+'''
+def measure(L, loop_length):
     LAvg = 0
+
     for p in product(range(N), range(N), range(N), range(N)):
         x, y, z, t = p
-        link = measureLink(x, y, z, t, loopLength)
+        link = measureLink(L, x, y, z, t, loop_length)
         LAvg += np.real(np.trace( \
         mm(L[x][y][z][t][0], L[m(x+1)][y][z][t][1], link[0], ct(L[x][y][z][t][1])) + \
         mm(L[x][y][z][t][0], L[m(x+1)][y][z][t][2], link[1], ct(L[x][y][z][t][2])) + \
@@ -189,70 +253,72 @@ def measure(loopLength):
         mm(L[x][y][z][t][1], L[x][m(y+1)][z][t][2], link[3], ct(L[x][y][z][t][2])) + \
         mm(L[x][y][z][t][1], L[x][m(y+1)][z][t][3], link[4], ct(L[x][y][z][t][3])) + \
         mm(L[x][y][z][t][2], L[x][y][m(z+1)][t][3], link[5], ct(L[x][y][z][t][3]))))
+
     return LAvg / N**4 / 18
 
 
-t0 = dt.datetime.now()
+'''
+Main function
+'''
+def main():
+    lat_tots = [[], [], []]
+    L = np.array([I] * N**4 * 4).reshape((N,N,N,N,4,3,3))    
 
-for i in range(100):
-    sweep()
+    t0 = dt.datetime.now()
 
-t1 = dt.datetime.now()
+    ## Thermalize the lattice
+    for i in range(100):
+        sweep(L)
 
-for i in range(N_cf):
-    for _ in range(N_cor):
-        sweep()
+    t1 = dt.datetime.now()
 
-    latTots0.append(measure(1))
-    latTots1.append(measure(2))
-    latTots2.append(measure(3))
+    for i in range(N_CF):
+        for _ in range(N_COR):
+            sweep(L)
 
-    if i < 9:
-        print('Config %d:     AxA - %.5f' % ((i+1), latTots0[i]))
-    elif i < 99:
-        print('Config %d:    AxA - %.5f' % ((i+1), latTots0[i]))
-    else:
-        print('Config %d:   AxA - %.5f' % ((i+1), latTots0[i]))
-    print('             Ax2A - %.5f' % (latTots1[i]))
-    print('             Ax3A - %.5f' % (latTots2[i]))
+        ## Records the measurement for each Wilson loop
+        for j in range(3):
+            lat_tots[j].append(measure(L, j + 1))
 
-t2 = dt.datetime.now()
+        ## Print out the data for the current sweep
+        space = ' ' * (5 - len(str(i + 1)))
+        print('Config %d:%sAxA  - %.5f' % ((i + 1), space, lat_tots[0][i]))
+        print('             Ax2A - %.5f' % (lat_tots[1][i]))
+        print('             Ax3A - %.5f' % (lat_tots[2][i]))
 
-plt.figure()
-plt.ylim(0, 1)
-plt.xlim(0,25)
-plt.ylabel('Monte Carlo Measurement')
-plt.xlabel('Sweeps')
-plt.plot(latTots0, 'b', lw = '1.5')
-plt.plot(latTots1, 'g', lw = '1.5')
-plt.plot(latTots2, 'r', lw = '1.5')
+    t2 = dt.datetime.now()
 
-Ax1A = mpatches.Patch(color = 'blue', label = '$a$ x $a$')
-Ax2A = mpatches.Patch(color = 'green', label = '$a$ x $2a$')
-Ax3A = mpatches.Patch(color = 'red', label = '$a$ x $3a$')
-plt.legend(handles = [Ax1A, Ax2A, Ax3A])
+    ## Print out the time taken for various parts of the program.
+    print('\nTime total:             %.3f seconds' %  (t2 - t0).total_seconds())
+    print('Time per configuration: %.3f seconds' % ((t2 - t1).total_seconds() / N_CF))
+    print('Time per sweep:         %.3f seconds\n' % ((t2 - t1).total_seconds() / N_CF / N_COR))
+   
+    ## Prints out average and standard deviation of the loops
+    for i in range(3):
+        print('Loop AxA:   Average - %.8f' % np.average(lat_tots[i]))
+        print('                Std - %.8f\n' % np.std(lat_tots[i]))
+
+    ## Saves relevant data to be analyzed inlqcd_analysis.py
+    for i in range(1, 4):
+        with open('NoImp_Ax%sA_Measurements.txt' % i, 'w') as f:
+            f.write(', '.join(str(x) for x in lat_tots[i - 1]))
+            f.write('\n\nAverage: %.8f' % np.average(lat_tots[i - 1]))
+            f.write('\n\nStd: %.8f' % np.std(lat_tots[i - 1]))
+
+    act = ''
+    if not IMP_ACT:
+        act = 'un'
+    with open('parameters_%simproved.txt' % act, 'w') as f:
+        f.write('%simproved action parameters:\n' % act)        
+        f.write('N = %d\n' % N)
+        f.write('N_cor = %d\n' % N_COR)
+        f.write('N_cf = %d\n' % N_CF)
+        f.write('N_ma = %d\n' % N_MA)
+        f.write('eps = %.2f\n' % EPS)
+        f.write('beta = %.3f\n' % BETA)
+        if IMP_ACT:
+            f.write('mu0 = %.3f\n' % MU0)
 
 
-print('\nTime total:             %.3f seconds' %  (t2 - t0).total_seconds())
-print('Time per configuration: %.3f seconds' % ((t2 - t1).total_seconds() / N_cf))
-print('Time per sweep:         %.3f seconds\n' % ((t2 - t1).total_seconds() / N_cf / N_cor))
-print('Loop AxA:   Average - %.8f' % np.average(latTots0))
-print('                Std - %.8f\n' % np.std(latTots0))
-print('Loop Ax2A:  Average - %.8f' % np.average(latTots1))
-print('                Std - %.8f\n' % np.std(latTots1))
-print('Loop Ax3A:  Average - %.8f' % np.average(latTots2))
-print('                Std - %.8f' % np.std(latTots2))
-
-
-with open('AxA_Measurements.txt', 'w') as f:
-    f.write(', '.join(str(x) for x in latTots0))
-    f.write('\n\nAverage: %.8f' % np.average(latTots0))
-    f.write('\n\nStd: %.8f' % np.std(latTots0))
-with open('Ax2A_Measurements.txt', 'w') as f:
-    f.write(", ".join(str(x) for x in latTots1))
-    f.write('\n\nAverage: %.8f' % np.average(latTots1))
-    f.write('\n\nStd: %.8f' % np.std(latTots1))
-with open('Ax3A_Measurements.txt', 'w') as f:
-    f.write(", ".join(str(x) for x in latTots2))
-    f.write('\n\nAverage: %.8f' % np.average(latTots2))
-    f.write('\n\nStd: %.8f' % np.std(latTots2))
+if __name__ == "__main__":
+    main()
