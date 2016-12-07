@@ -13,80 +13,22 @@ import matplotlib.lines as mlines
 '''
 Reads from the files created by 'gluonic_path_integral.py' and stores them
 in the arrays imp_act and unimp_act, depending on the action used, for the three
-Wilson loops. It also reads the total number of measurements done for both
-actions to be used in the plot.
+Wilson loops. It also reads the parameters used for the improved and unimproved
+action which are stored as dictionaries.
 '''
 def read_data():
-    imp_act = []
-    unimp_act = []
-    N_cf_imp = 0
-    N_cf_unimp = 0
-    N_cor_imp = 0
-    N_cor_unimp = 0
+    par_imp = np.load('parameters_improved.npy')[()]
+    par_unimp = np.load('parameters_unimproved.npy')[()]
 
-    '''
-    Tries to read the data for the improved and unimproved action, respectively.
-    If one is missing, then it will skip that action.
-    '''
-    try:
-        for i in range(1, 4):
-            imp_act.append(open('Imp_Ax%sA_Measurements.txt' % i,
-                                'r').read().split(','))
+    imp_act = np.array([np.load('imp_Ax1A_measurements.npy'),
+                        np.load('imp_Ax2A_measurements.npy'),
+                        np.load('imp_Ax3A_measurements.npy')])
 
-            a = []
-            for j in imp_act[i - 1][-1]:
-                if j != 'A':
-                    a.append(j)
-                else:
-                    break
+    unimp_act = np.array([np.load('unimp_Ax1A_measurements.npy'),
+                          np.load('unimp_Ax2A_measurements.npy'),
+                          np.load('unimp_Ax3A_measurements.npy')])
 
-            imp_act[i - 1][-1] = ''.join(a)
-
-            for j in range(len(imp_act[i - 1])):
-                imp_act[i - 1][j] = float(imp_act[i - 1][j])
-    except:
-        pass
-
-    try:
-        for i in range(1, 4):
-            unimp_act.append(open('UnImp_AX%sA_Measurements.txt' % i,
-                                  'r').read().split(','))
-
-            b = []
-            for j in unimp_act[i - 1][-1]:
-                if j != 'A':
-                    b.append(j)
-                else:
-                    break
-
-            unimp_act[i - 1][-1] = ''.join(b)
-
-            for j in range(len(unimp_act[i - 1])):
-                unimp_act[i - 1][j] = float(unimp_act[i - 1][j])
-    except:
-        pass
-
-    ## Reads the parameters to find the N_cor and N_cf values if they exist
-    try:
-        imp_param = open('parameters_improved.txt', 'r').read().split('\n')[:-1]
-        for i in imp_param:
-            if i[0:7] == 'N_cor =':
-                N_cor_imp = int(i[8:])
-            elif i[0:6] == 'N_cf =':
-                N_cf_imp = int(i[7:])
-    except:
-        pass
-    try:
-        unimp_param = open('parameters_unimproved.txt', 'r').read().split('\n')[:-1]
-        for i in unimp_param:
-            if i[0:7] == 'N_cor =':
-                N_cor_unimp = int(i[8:])
-            elif i[0:6] == 'N_cf =':
-                N_cf_unimp = int(i[7:])
-    except:
-        pass
-
-    return imp_act, unimp_act, N_cor_imp, N_cor_unimp, N_cf_imp, N_cf_unimp
+    return par_imp, par_unimp, imp_act, unimp_act
 
 
 '''
@@ -148,23 +90,24 @@ Main function
 '''
 def main():
     ## Read the data
-    imp_act, unimp_act, N_cor_imp, N_cor_unimp, N_cf_imp, N_cf_unimp = read_data()
+    par_imp, par_unimp, imp_act, unimp_act = read_data()
 
     ## Plot the data
-    plot_data(imp_act, unimp_act, N_cor_imp, N_cor_unimp, N_cf_imp, N_cf_unimp)
+    plot_data(imp_act, unimp_act, par_imp['N_COR'], par_unimp['N_COR'],
+              par_imp['N_CF'], par_unimp['N_CF'])
 
     ## The mean and standard deviation for the above data sets if they exist
     if unimp_act != []:
         print('Unimproved Action:')
         for i in range(3):
-            print('    Ax1A: %.5f ± %.5f' % (np.average(unimp_act[i]),
-                                             np.std(unimp_act[i])))
+            print('    Ax%sA: %.5f ± %.5f' % ((i + 1), np.average(unimp_act[i]),
+                            np.std(unimp_act[i]) / np.sqrt(par_unimp['N_CF'])))
         print('\n')
     if imp_act != []:
         print('Improved Action:')
         for i in range(3):
-            print('    Ax1A: %.5f ± %.5f' % (np.average(imp_act[i]),
-                                             np.std(imp_act[i])))
+            print('    Ax%sA: %.5f ± %.5f' % ((i + 1), np.average(imp_act[i]),
+                            np.std(imp_act[i]) / np.sqrt(par_imp['N_CF'])))
 
 
 if __name__ == "__main__":

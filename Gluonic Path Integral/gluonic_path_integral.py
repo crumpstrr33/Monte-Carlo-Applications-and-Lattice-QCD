@@ -8,16 +8,18 @@ import numpy as np
 import cmath
 import datetime as dt
 from itertools import product
-import matrix_functions
+import matrix_functions as mat_funcs
 
-IMP_ACT = False
-N = 4 ## Lattice size
-N_COR = 1 ## Number of sweeps before measurement
+IMP_ACT = True
+SAVE_DATA = True
+THERMALIZE = True
+N = 8 ## Lattice size
+N_COR = 50 ## Number of sweeps before measurement
 N_CF = 25 ## Number of measurements
 N_MA = 10 ## Metropolis steps per link
 EPS = 0.24
 NUM_MAT = 100 ## Number of SU3 matrices and their inverses used
-if IMP_ACT: ## Extra constants for the improved action
+if IMP_ACT: ## Extra connstants for the improved action
     BETA = 1.719
     MU0 = 0.797
     C1 = 5 / (3 * MU0**4)
@@ -25,18 +27,18 @@ if IMP_ACT: ## Extra constants for the improved action
 else:
     BETA = 5.5
 
-mat3 = matrix_functions.Matrix_NxN(3, EPS)
+mat3 = mat_funcs.MatrixNxN(3, EPS)
 
 j = cmath.sqrt(-1) ## Imaginary unit
 I = mat3.I() ## Identity matrix 
 SU3_LIST = []
 for i in range(NUM_MAT): ## Generate SU3 matrices and their inverses
-    SU3_LIST.append(mat3.SUn())
+    SU3_LIST.append(mat3.sun())
     SU3_LIST.append(np.linalg.inv(SU3_LIST[2 * i]))
 
 
 '''
-Returns modulus of x of n (used for periodic boundary conditions)
+Returns modulus of x of n (used for periodic boundary conditions).
 '''
 def m(x, n=N):
     return x % n
@@ -56,8 +58,20 @@ def mm(*mats):
     product = I
     for i in mats:
         product = np.dot(product, i)
-
     return product
+
+
+'''
+def build_staple(x, y, z, t, n, l, h, miss_link):
+    #Varible miss_link must be in range (0, 2*(l + h) - 1). Starts bottom left
+    #link and moves counterclockwise.
+    for i in range(l):
+        
+    for i in range(h):
+    
+    
+    return staple
+'''
 
 
 '''
@@ -262,13 +276,14 @@ Main function
 '''
 def main():
     lat_tots = [[], [], []]
-    L = np.array([I] * N**4 * 4).reshape((N,N,N,N,4,3,3))    
+    L = np.array([I] * N**4 * 4).reshape((N, N, N, N, 4, 3, 3))    
 
     t0 = dt.datetime.now()
 
     ## Thermalize the lattice
-    for i in range(100):
-        sweep(L)
+    if THERMALIZE:
+        for i in range(100):
+            sweep(L)
 
     t1 = dt.datetime.now()
 
@@ -281,43 +296,67 @@ def main():
             lat_tots[j].append(measure(L, j + 1))
 
         ## Print out the data for the current sweep
-        space = ' ' * (5 - len(str(i + 1)))
-        print('Config %d:%sAxA  - %.5f' % ((i + 1), space, lat_tots[0][i]))
-        print('             Ax2A - %.5f' % (lat_tots[1][i]))
-        print('             Ax3A - %.5f' % (lat_tots[2][i]))
+        print('Config %2d:   Ax1A - %8.5f' % ((i + 1), lat_tots[0][i]), '|\n' + \
+              '             Ax2A - %8.5f' % (lat_tots[1][i]), '|\n' + \
+              '             Ax3A - %8.5f' % (lat_tots[2][i]), '|')
+        print('-' * 28, '+')
 
     t2 = dt.datetime.now()
 
-    ## Print out the time taken for various parts of the program.
-    print('\nTime total:             %.3f seconds' %  (t2 - t0).total_seconds())
-    print('Time per configuration: %.3f seconds' % ((t2 - t1).total_seconds() / N_CF))
-    print('Time per sweep:         %.3f seconds\n' % ((t2 - t1).total_seconds() / N_CF / N_COR))
+    ## Print out the time taken for various parts of the program
+    print('\nTime total:             %10.3f seconds' %  (t2 - t0).total_seconds())
+    print('Time per configuration: %10.3f seconds' % ((t2 - t1).total_seconds() / N_CF))
+    print('Time per sweep:         %10.3f seconds\n' % ((t2 - t1).total_seconds() / N_CF / N_COR))
    
     ## Prints out average and standard deviation of the loops
     for i in range(3):
-        print('Loop AxA:   Average - %.8f' % np.average(lat_tots[i]))
-        print('                Std - %.8f\n' % np.std(lat_tots[i]))
+        print('Loop Ax%sA:   Average - %.8f' % ((i + 1), np.average(lat_tots[i])))
+        print('                 Std - %.8f\n' % np.std(lat_tots[i]))
 
-    ## Saves relevant data to be analyzed inlqcd_analysis.py
-    for i in range(1, 4):
-        with open('NoImp_Ax%sA_Measurements.txt' % i, 'w') as f:
-            f.write(', '.join(str(x) for x in lat_tots[i - 1]))
-            f.write('\n\nAverage: %.8f' % np.average(lat_tots[i - 1]))
-            f.write('\n\nStd: %.8f' % np.std(lat_tots[i - 1]))
+    ## Saves the data in both .txt and .npy files for easy readability by 
+    ## person and lqcd_analysis.py
+    if SAVE_DATA:
+        '''
+        Saves relevant data to be analyzed in lqcd_analysis.py as .txt files for
+        human readability and as .npy files for the mentioned .py file
+        '''
+        if not IMP_ACT:
+            act = 'un'
+        else:
+            act = ''
+    
+        for i in range(1, 4):
+            ## Save lat_tots as .txt files
+            with open('%simp_Ax%sA_measurements.txt' % (act, i), 'w') as f:
+                f.write(', '.join(str(x) for x in lat_tots[i - 1]))
+                f.write('\n\nAverage: %.8f' % np.average(lat_tots[i - 1]))
+                f.write('\n\nStd: %.8f' % np.std(lat_tots[i - 1]))
+            
+            ## Save lat_tots as .npy files
+            np.save('%simp_Ax%sA_measurements' % (act, i), lat_tots[i - 1])
+    
+        ## Save parameters in .txt file
+        with open('parameters_%simproved.txt' % act, 'w') as f:
+            f.write('%simproved action parameters:\n' % act)        
+            f.write('N = %d\n' % N)
+            f.write('N_cor = %d\n' % N_COR)
+            f.write('N_cf = %d\n' % N_CF)
+            f.write('N_ma = %d\n' % N_MA)
+            f.write('eps = %.2f\n' % EPS)
+            f.write('beta = %.3f\n' % BETA)
+            if IMP_ACT:
+                f.write('mu0 = %.3f\n' % MU0)
 
-    act = ''
-    if not IMP_ACT:
-        act = 'un'
-    with open('parameters_%simproved.txt' % act, 'w') as f:
-        f.write('%simproved action parameters:\n' % act)        
-        f.write('N = %d\n' % N)
-        f.write('N_cor = %d\n' % N_COR)
-        f.write('N_cf = %d\n' % N_CF)
-        f.write('N_ma = %d\n' % N_MA)
-        f.write('eps = %.2f\n' % EPS)
-        f.write('beta = %.3f\n' % BETA)
+        ## Save parameters in .npy file
         if IMP_ACT:
-            f.write('mu0 = %.3f\n' % MU0)
+            np.save('parameters_%simproved' % act, {'N':N, 'N_COR':N_COR,
+                                                        'N_CF':N_CF, 'N_MA':N_MA,
+                                                        'EPS':EPS, 'BETA':BETA,
+                                                        'MU0':MU0})
+        else:
+            np.save('parameters_%simproved' % act, {'N':N, 'N_COR':N_COR,
+                                                        'N_CF':N_CF, 'N_MA':N_MA,
+                                                        'EPS':EPS, 'BETA':BETA})
 
 
 if __name__ == "__main__":

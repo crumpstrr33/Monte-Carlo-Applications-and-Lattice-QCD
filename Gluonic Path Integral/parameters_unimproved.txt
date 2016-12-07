@@ -1,0 +1,7 @@
+Unimproved action parameters:
+N = 8
+N_cor = 50
+N_cf = 25
+N_ma = 10
+eps = 0.24
+beta = 5.500
