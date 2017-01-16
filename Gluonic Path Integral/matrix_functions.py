@@ -67,7 +67,7 @@ class MatrixNxN(object):
         Returns:
         SUd - a complex dxd SU(d) matrix
 
-        Creates an nxn SU(n) (for n=d) matrix by normalizing a unitary matrix
+        Creates an SU(n) (for n=d) matrix by normalizing a unitary matrix
         with the dth root of the unitary matrix's determinant where d is the
         size of the matrix.
         '''
@@ -101,109 +101,6 @@ class MatrixNxN(object):
         return exp_tot
 
 
-    def gram_schmidt(self, mat, rows=True):
-        '''
-        Parameters:
-        mat - any dxd matrix
-        rows - (optional) if True, this function will orthonormalize the rows
-               of the matrix but if False, it will orthonormalize the columns
-               of the matrix.
-        Returns:
-        gm_mat - the orthonormalized matrix. If rows=False, the matrix is
-                 returned transposed to restore the rows back as columns since
-                 the function does calculations on the columns
-
-        Orthonormalizes the row or columns of a dxd matrix via the Gram Schmidt
-        process. The dimensions of the pass matrix must match that of the object
-        otherwise nothing is returned.
-        '''
-        if rows:
-            gm_mat = np.copy(mat).astype(complex)
-        else:
-            gm_mat = np.copy(mat).astype(complex).T
-
-        if len(mat[0]) != self.d:
-            print('Wrong matrix dimension: (%d, %d) for d=%d object'
-                  % (gm_mat.shape[0], gm_mat.shape[1], self.d))
-            return
-    
-        for n in range(1, self.d):
-            proj = 0
-            for m in range(n):
-                u, v = gm_mat[m], gm_mat[n]
-                proj += np.dot(v, u) / np.dot(u, u) * u
-            gm_mat[n] -= proj
-            
-        gm_mat /= np.linalg.norm(gm_mat, axis=1)[:, None]
-
-        if rows:
-            return gm_mat
-        else:
-            return gm_mat.T
-
-
-    def rand_mat(self, is_complex=True, dtype='float', max_val=5, min_val=-5,
-                 distribution='uniform', mean=0, std=1, **kwargs):
-        '''
-        Parameters:
-        is_complex - (optional) if True, this function will add an imaginary
-                     part to each element of the matrix but if False, every
-                     element will remain real
-        dtype - (optional) determines the type of each number should be. Can be
-                'float' for floats or 'int' for ints.
-        max_val - (optional) the maximum value allowed for each element (if
-                  is_complex=True, then, for each element a+ib, a and b will
-                  both be strictly less than max_val)
-        min_val - (optional) the minimum value allowed for each element (if
-                  is_complex=True, then, for each element a+ib, a and b will
-                  both be strictly greater than min_val)
-        distribution - (optional) determines the random process in which the
-                       values of the matrix are chosen. Can be 'uniform' for a 
-                       uniform distribution or 'normal' for a normal
-                       distribution.
-        mean - (optional) if distribution='normal', then this is the mean used
-               for the normal distribution
-        std - (optional) if distribution='normal', then this is the std used
-              for the normal distribution
-        Returns:
-        mat - random dxd matrix
-
-        Creates a random dxd matrix with properties given.
-        '''
-        s = (self.d, self.d)
-        mav, miv = max_val, min_val
-
-        if distribution == 'uniform':
-            mat = (dtype == 'float') * np.random.uniform(miv, mav, s) + \
-                  (dtype == 'int') * np.random.uniform(miv, mav, s).astype(int)
-
-            if is_complex:
-                mat = mat.astype('complex')
-                mat += (dtype == 'float') * np.random.uniform(miv, mav, s) * j + \
-                       (dtype == 'int') * np.random.uniform(miv, mav, s).astype(int) * j
-        elif distribution == 'normal':
-            mat = (dtype == 'float') * np.random.normal(mean, std, s) + \
-                  (dtype == 'int') * np.random.normal(mean, std, s).astype(int)
-
-            if is_complex:
-                mat = mat.astype('complex')
-                mat += (dtype == 'float') * np.random.normal(mean, std, s) * j + \
-                      (dtype == 'int') * np.random.normal(mean, std, s).astype(int) * j
-        else:
-            print('The distribution \'%s\' not understood' % distribution)
-            return
-
-        if np.sum(mat) == 0:
-            print('The dtype \'%s\' not understood' % dtype)
-            return
-            
-        if kwargs is not None:
-            for key in kwargs:
-                print('There\'s no option for \'%s\', maybe there should be.' % key)
-
-        return mat
-
-
     def I(self, dtype=complex):
         '''
         Parameters:
@@ -225,56 +122,8 @@ class MatrixNxN(object):
 
 
 '''
-Common matrix constants.
-'''
-class MatrixConst(object):
-    def __init__(self):
-        '''
-        Pauli Matrices
-        '''
-        self.pm1 = np.array([0 + 0.j, 1 + 0.j,
-                             1 + 0.j, 0 + 0.j])
-        self.pm2 = np.array([0 + 0.j, 0 - 1.j,
-                             0 + 1.j, 0 + 0.j])
-        self.pm3 = np.array([1 + 0.j, 0 + 0.j,
-                             0 + 0.j, -1 + 0.j])
-        self.pmList = np.array([self.pm1, self.pm2, self.pm3])
-
-
-        '''
-        Gell-Mann Matrices.
-        '''        
-        self.gm1 = np.array([0 + 0.j,  1 + 0.j,  0 + 0.j,
-                             1 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j,  0 + 0.j]).reshape((3,3))
-        self.gm2 = np.array([0 + 0.j,  0 - 1.j,  0 + 0.j,
-                             0 + 1.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j,  0 + 0.j]).reshape((3,3))                         
-        self.gm3 = np.array([1 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j, -1 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j,  0 + 0.j]).reshape((3,3))
-        self.gm4 = np.array([0 + 0.j,  0 + 0.j,  1 + 0.j,
-                             0 + 0.j,  0 + 0.j,  0 + 0.j,
-                             1 + 0.j,  0 + 0.j,  0 + 0.j]).reshape((3,3))
-        self.gm5 = np.array([0 + 0.j,  0 + 0.j,  0 - 1.j,
-                             0 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 1.j,  0 + 0.j,  0 + 0.j]).reshape((3,3))
-        self.gm6 = np.array([0 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j,  1 + 0.j,
-                             0 + 0.j,  1 + 0.j,  0 + 0.j]).reshape((3,3))
-        self.gm7 = np.array([0 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j,  0 - 1.j,
-                             0 + 0.j,  0 + 1.j,  0 + 0.j]).reshape((3,3))
-        self.gm8 = np.array([1 + 0.j,  0 + 0.j,  0 + 0.j,
-                             0 + 0.j,  1 + 0.j,  0 + 0.j,
-                             0 + 0.j,  0 + 0.j, -2 + 0.j]).reshape((3,3)) / np.sqrt(3)
-        self.gmList = np.array([self.gm1, self.gm2, self.gm3,
-                                self.gm4, self.gm5, self.gm6,
-                                self.gm7, self.gm8])
-
-
-'''
-Main function
+Main function: Shows the distrubtion of the determinants of SU(n) matrices
+               on a complex plot.
 '''
 def main():
     num_mat = 10000
