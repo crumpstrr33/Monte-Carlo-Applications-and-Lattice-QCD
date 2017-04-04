@@ -1,5 +1,5 @@
-# Note:
-Looking over this code now, months after it was completed, I realize the myriad mistakes, inefficiencies, etc. that exist. If I were to write this code now, it would look much different and be high quality. Instead, I will keep it as is since this is my thesis work and fixing it now would be dishonest. I may in the future attempt again some of this code.
+**Note:** Looking over this code now, months after it was completed, I realize the myriad mistakes, inefficiencies, etc. that exist. If I were to write this code now, it would look much different and be high quality. Instead, I will keep it as is since this is my thesis work and fixing it now would be dishonest. I may in the future attempt again some of this code.
+<br></br><br></br>
 
 # Monte Carlo Applications and Lattice QCD
 Contains all of the code used in the thesis along with the .pdf and .tex files and figures used for the thesis. Below are quick descriptions of the three main sections of the paper. Further explanations for the code can be found in the respective programs and for the physics of the code can be found in the paper (Honors Thesis.pdf) or in one of the individual sections (found in the Honors Thesis folder).
